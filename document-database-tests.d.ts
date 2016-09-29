@@ -30,6 +30,7 @@ export interface Fieldnames {
 
 export function test_create<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void
 export function test_read<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void
+export function test_replace<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void
 export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: Fieldnames): void
 export function test_del<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void
 export function test_find<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, unique_key_fieldname: string): void
