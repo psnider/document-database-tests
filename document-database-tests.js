@@ -461,5 +461,77 @@ function test_find(getDB, createNewObject, unique_key_fieldname) {
             done(error);
         });
     });
+    describe('cursor', function () {
+        // add 20 elements to the database
+        before(function (done) {
+            var db = getDB();
+            var promises = [];
+            for (var i = 0; i < 20; ++i) {
+                var obj = createNewObject();
+                promises.push(db.create(obj));
+            }
+            Promise.all(promises).then(function () {
+                done();
+            });
+        });
+        it('should return the first item when start_offset = 0', function (done) {
+            var db = getDB();
+            var find_promise = db.find(undefined, undefined, undefined, { start_offset: 0 });
+            find_promise.then(function (found_objs) {
+                // cannot know which database item will be first
+                expect(found_objs[0]).to.exist;
+                done();
+            }, function (error) {
+                done(error);
+            });
+        });
+        it('should default start_offset to 0', function (done) {
+            var db = getDB();
+            // get the first element
+            db.find(undefined, undefined, undefined, { start_offset: 0 }).then(function (found_objs) {
+                expect(found_objs[0]).to.exist;
+                // save the first element
+                var first_element = found_objs[0];
+                return db.find(undefined, undefined, undefined, undefined).then(function (found_objs) {
+                    // confirm the default returns the first element
+                    expect(found_objs[0]).to.eql(first_element);
+                    done();
+                });
+            }).catch(function (error) { done(error); });
+        });
+        it('should return the tenth item when start_offset = 9', function (done) {
+            var db = getDB();
+            db.find(undefined, undefined, undefined, { start_offset: 0, count: 10 }).then(function (found_objs) {
+                expect(found_objs[9]).to.exist;
+                var saved = found_objs;
+                return db.find(undefined, undefined, undefined, { start_offset: 9 }).then(function (found_objs) {
+                    // confirm the default returns the first element
+                    expect(found_objs[0]).to.eql(saved[9]);
+                    done();
+                });
+            }).catch(function (error) { done(error); });
+        });
+        it('should return one item if count = 1', function (done) {
+            var db = getDB();
+            db.find(undefined, undefined, undefined, { count: 1 }).then(function (found_objs) {
+                expect(found_objs).to.have.lengthOf(1);
+                done();
+            }).catch(function (error) { done(error); });
+        });
+        it('should default count to 10', function (done) {
+            var db = getDB();
+            db.find(undefined, undefined, undefined, undefined).then(function (found_objs) {
+                expect(found_objs).to.have.lengthOf(10);
+                done();
+            }).catch(function (error) { done(error); });
+        });
+        it('should return 11 items if count = 11', function (done) {
+            var db = getDB();
+            db.find(undefined, undefined, undefined, { count: 11 }).then(function (found_objs) {
+                expect(found_objs).to.have.lengthOf(11);
+                done();
+            }).catch(function (error) { done(error); });
+        });
+    });
 }
 exports.test_find = test_find;

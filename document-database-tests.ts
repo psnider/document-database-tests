@@ -1,7 +1,7 @@
 import chai                             = require('chai')
 var expect                              = chai.expect
 
-import {DocumentDatabase, UpdateFieldCommand} from 'document-database-if'
+import {DocumentDatabase, UpdateFieldCommand, Cursor} from 'document-database-if'
 import {Fieldnames} from './document-database-tests.d.ts'
 
 
@@ -9,6 +9,7 @@ function skipIfAny(conditions: boolean[]): Mocha.ITestDefinition {
     let skip = conditions.some((condition) => {return condition})
     return skip ? <Mocha.ITestDefinition>it.skip : it
 }
+
 
 // @return the element at given field path, e.g. "hat.size""
 function getValue(obj, fieldpath) {
@@ -600,15 +601,120 @@ export function test_find<T>(getDB: () => DocumentDatabase<T>, createNewObject: 
                         expect(found_obj[unique_key_fieldname]).to.equal(obj[unique_key_fieldname])
                         done()
                     },
-            (error) => {
-                done(error)
-            }
+                    (error) => {
+                        done(error)
+                    }
                 )
             },
             (error) => {
                 done(error)
             }
         )
+    })
+
+
+    describe('cursor', function() {
+
+        // add 20 elements to the database
+        before((done) => {
+            var db = getDB()
+            var promises = []
+            for (var i = 0 ; i < 20 ; ++i) {
+                var obj: T = createNewObject()
+                promises.push(db.create(obj))
+            }
+            Promise.all(promises).then(() => {
+                done()
+            })
+        })
+
+
+        it('should return the first item when start_offset = 0', function(done) {
+            let db = getDB()
+            let find_promise = db.find(undefined, undefined, undefined, {start_offset: 0})
+            find_promise.then(
+                (found_objs) => {
+                    // cannot know which database item will be first
+                    expect(found_objs[0]).to.exist
+                    done()
+                },
+                (error) => {
+                    done(error)
+                }
+            )
+        })
+
+
+        it('should default start_offset to 0', function(done) {
+            let db = getDB()
+            // get the first element
+            db.find(undefined, undefined, undefined, {start_offset: 0}).then(
+                (found_objs) => {
+                    expect(found_objs[0]).to.exist
+                    // save the first element
+                    const first_element = found_objs[0]
+                    return db.find(undefined, undefined, undefined, undefined).then(
+                        (found_objs) => {
+                            // confirm the default returns the first element
+                            expect(found_objs[0]).to.eql(first_element)
+                            done()
+                        }
+                    )
+                }
+            ).catch((error) => {done(error)})
+        })
+
+
+        it('should return the tenth item when start_offset = 9', function(done) {
+            let db = getDB()
+            db.find(undefined, undefined, undefined, {start_offset: 0, count: 10}).then(
+                (found_objs) => {
+                    expect(found_objs[9]).to.exist
+                    const saved = found_objs
+                    return db.find(undefined, undefined, undefined, {start_offset: 9}).then(
+                        (found_objs) => {
+                            // confirm the default returns the first element
+                            expect(found_objs[0]).to.eql(saved[9])
+                            done()
+                        }
+                    )
+                }
+            ).catch((error) => {done(error)})
+        })
+
+
+        it('should return one item if count = 1', function(done) {
+            let db = getDB()
+            db.find(undefined, undefined, undefined, {count: 1}).then(
+                (found_objs) => {
+                    expect(found_objs).to.have.lengthOf(1)
+                    done()
+                }
+            ).catch((error) => {done(error)})
+        })
+
+
+        it('should default count to 10', function(done) {
+            let db = getDB()
+            db.find(undefined, undefined, undefined, undefined).then(
+                (found_objs) => {
+                    expect(found_objs).to.have.lengthOf(10)
+                    done()
+                }
+            ).catch((error) => {done(error)})
+        })
+
+
+        it('should return 11 items if count = 11', function(done) {
+            let db = getDB()
+            db.find(undefined, undefined, undefined, {count: 11}).then(
+                (found_objs) => {
+                    expect(found_objs).to.have.lengthOf(11)
+                    done()
+                }
+            ).catch((error) => {done(error)})
+        })
+
     })
 
 }
