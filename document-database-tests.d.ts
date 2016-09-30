@@ -26,8 +26,8 @@ export interface Fieldnames {
             createElement: () => {}   // 2 sequential calls must return different results
         }
     }
-    supported: {
-        update: {
+    supported?: {
+        update?: {
             basic_set_only?: boolean
         }
     }
