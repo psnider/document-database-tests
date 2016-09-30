@@ -26,6 +26,11 @@ export interface Fieldnames {
             createElement: () => {}   // 2 sequential calls must return different results
         }
     }
+    supported: {
+        update: {
+            basic_set_only?: boolean
+        }
+    }
 }
 
 export function test_create<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void

@@ -5,6 +5,11 @@ import {DocumentDatabase, UpdateFieldCommand} from 'document-database-if'
 import {Fieldnames} from './document-database-tests.d.ts'
 
 
+function skipIfAny(conditions: boolean[]): Mocha.ITestDefinition {
+    let skip = conditions.some((condition) => {return condition})
+    return skip ? <Mocha.ITestDefinition>it.skip : it
+}
+
 // @return the element at given field path, e.g. "hat.size""
 function getValue(obj, fieldpath) {
     var name_components = fieldpath.split('.');
@@ -37,6 +42,7 @@ function expectDBOjectToContainAllObjectFields(db_obj, obj) {
 
 // seem to need getDB to be dynamic, otherwise DocumentDatabase is undefined!
 export function test_create<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void {
+
     it('+ should create a new object', function(done) {
         var db = getDB()
         var obj: T = createNewObject()
@@ -54,6 +60,38 @@ export function test_create<T>(getDB: () => DocumentDatabase<T>, createNewObject
             }
         )
     })
+
+
+    it('+ should not modify the original object', function(done) {
+        var db = getDB()
+        var obj: T = createNewObject()
+        db.create(obj).then(
+            (created_obj) => {
+                expect(obj).to.not.have.property('_id')
+                done()
+            },
+            (error) => {
+                done(error)
+            }
+        )
+    })
+
+
+    it('+ should return an error if the object to be created contains an _id', function(done) {
+        var db = getDB()
+        var obj: T = createNewObject()
+        obj['_id'] = '123456789012345678901234'
+        db.create(obj).then(
+            (created_obj) => {
+                done(new Error('_id not allowed in object to be created'))
+            },
+            (error) => {
+                expect(error.message).to.equal('_id isnt allowed for create')
+                done()
+            }
+        )
+    })
+
 }
 
 
@@ -93,10 +131,26 @@ export function test_read<T>(getDB: () => DocumentDatabase<T>, createNewObject: 
                 done()
             },
             (error) => {
-                done(error)
+                done(new Error('read of valid format _id, but not referenceing an object should not return error'))
             }
         )
     })
+
+
+    it('should return an error when the request is missing the _id', function(done) {
+        var db = getDB()
+        var read_promise = db.read(undefined)
+        read_promise.then(
+            (result) => {
+                done(new Error('read of invalid _id should return error'))
+            },
+            (error) => {
+                expect(error.message).to.equal('_id is invalid')
+                done()
+            }
+        )
+    })
+
 }
 
 
@@ -138,6 +192,9 @@ export function test_replace<T>(getDB: () => DocumentDatabase<T>, createNewObjec
 // seem to need getDB to be dynamic, otherwise DocumentDatabase is undefined!
 export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: Fieldnames): void {
 
+    let supported = (fieldnames.supported && fieldnames.supported.update) || {}
+
+
     function test_update(obj, conditions, update_cmd: UpdateFieldCommand, done, tests) {
         var db = getDB()
         if (conditions == null)  conditions = {}
@@ -160,6 +217,7 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
             }
         )
     }
+
 
     if (fieldnames.top_level) {
 
@@ -202,18 +260,17 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
 
             describe('cmd=unset', function() {
 
-                if (fieldnames.top_level.populated_string) {
+                let _it = skipIfAny([supported.basic_set_only, fieldnames.top_level.populated_string == null])
 
-                    it('+ should remove an existing field in an object', function(done) {
-                        var obj: T = createNewObject()
-                        var populated_string = fieldnames.top_level.populated_string 
-                        var UPDATE_CMD : UpdateFieldCommand = {cmd: 'unset', field: populated_string}
-                        test_update(obj, null, UPDATE_CMD, done, (updated_obj) => {
-                            expect(updated_obj[populated_string]).to.be.undefined
-                        })
+                _it('+ should remove an existing field in an object', function(done) {
+                    var obj: T = createNewObject()
+                    var populated_string = fieldnames.top_level.populated_string 
+                    var UPDATE_CMD : UpdateFieldCommand = {cmd: 'unset', field: populated_string}
+                    test_update(obj, null, UPDATE_CMD, done, (updated_obj) => {
+                        expect(updated_obj[populated_string]).to.be.undefined
                     })
+                })
 
-                }
 
             })
 
@@ -228,28 +285,27 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
 
             describe('cmd=set', function() {
 
-                if (fieldnames.top_level.string_array) {
+                let _it = skipIfAny([supported.basic_set_only, fieldnames.top_level.string_array == null])
 
-                    it('+ should replace an existing element in an array of simple types', function(done) {
-                        var string_array = fieldnames.top_level.string_array
-                        var obj: T = createNewObject()
-                        const original_value = 'for all uses'
-                        const updated_value = 'dont use with anti-widgets!'
-                        obj[string_array.name] = [original_value]
-                        var conditions = {}
-                        conditions[string_array.name] = original_value
-                        var UPDATE_CMD : UpdateFieldCommand = {cmd: 'set', field: string_array.name, element_id: original_value, value: updated_value}
-                        test_update(obj, conditions, UPDATE_CMD, done, (updated_obj) => {
-                            expect(updated_obj[string_array.name].length).to.equal(1)
-                            expect(updated_obj[string_array.name][0]).to.equal(updated_value)
-                        })
+                _it('+ should replace an existing element in an array of simple types', function(done) {
+                    var string_array = fieldnames.top_level.string_array
+                    var obj: T = createNewObject()
+                    const original_value = 'for all uses'
+                    const updated_value = 'dont use with anti-widgets!'
+                    obj[string_array.name] = [original_value]
+                    var conditions = {}
+                    conditions[string_array.name] = original_value
+                    var UPDATE_CMD : UpdateFieldCommand = {cmd: 'set', field: string_array.name, element_id: original_value, value: updated_value}
+                    test_update(obj, conditions, UPDATE_CMD, done, (updated_obj) => {
+                        expect(updated_obj[string_array.name].length).to.equal(1)
+                        expect(updated_obj[string_array.name][0]).to.equal(updated_value)
                     })
-
-                }
-
+                })
 
 
-                it('+ should replace an existing element in an array of objects', function(done) {
+                _it = skipIfAny([supported.basic_set_only])
+
+                _it('+ should replace an existing element in an array of objects', function(done) {
                     var obj_array = fieldnames.top_level.obj_array
                     var obj: T = createNewObject()
                     var original_first_element = obj[obj_array.name][0]
@@ -266,8 +322,9 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
                     })
                 })
 
+                _it = skipIfAny([supported.basic_set_only])
 
-                it('+ should create a new field in an existing element in an array of objects', function(done) {
+                _it('+ should create a new field in an existing element in an array of objects', function(done) {
                     var obj_array = fieldnames.top_level.obj_array
                     var unpopulated_field = fieldnames.top_level.obj_array.unpopulated_field
                     var obj: T = createNewObject()
@@ -286,7 +343,9 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
                 })
 
 
-                it('+ should replace an existing field in an existing element in an array of objects', function(done) {
+                _it = skipIfAny([supported.basic_set_only])
+
+                _it('+ should replace an existing field in an existing element in an array of objects', function(done) {
                     var obj_array = fieldnames.top_level.obj_array
                     var populated_field = fieldnames.top_level.obj_array.populated_field
                     var obj: T = createNewObject()
@@ -310,7 +369,9 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
 
             describe('cmd=unset ', function() {
 
-                it('+ should remove an existing field from an existing element in the array', function(done) {
+                let _it = skipIfAny([supported.basic_set_only])
+
+                _it('+ should remove an existing field from an existing element in the array', function(done) {
                     var obj_array = fieldnames.top_level.obj_array
                     var populated_field = fieldnames.top_level.obj_array.populated_field
                     var obj: T = createNewObject()
@@ -330,7 +391,7 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
                 })
 
 
-                it('- should not remove or delete an existing element of an array of simple types', function(done) {
+                _it('- should not remove or delete an existing element of an array of simple types', function(done) {
                     var string_array = fieldnames.top_level.string_array
                     var obj: T = createNewObject()
                     const original_value = 'for all uses'
@@ -350,7 +411,7 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
                 })
 
 
-                it('- should not remove or delete an existing element of an array of objects', function(done) {
+                _it('- should not remove or delete an existing element of an array of objects', function(done) {
                     var obj_array = fieldnames.top_level.obj_array
                     var obj: T = createNewObject()
                     const original_first_element = obj[obj_array.name][0]
@@ -375,7 +436,9 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
 
             describe('cmd=insert', function() {
 
-                it('+ should create a new element in an array of simple types', function(done) {
+                let _it = skipIfAny([supported.basic_set_only])
+
+                _it('+ should create a new element in an array of simple types', function(done) {
                     var string_array = fieldnames.top_level.string_array
                     var obj: T = createNewObject()
                     const original_value = getRandomValue('string')
@@ -393,7 +456,7 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
                 })
 
 
-                it('+ should create a new element in an array of objects', function(done) {
+                _it('+ should create a new element in an array of objects', function(done) {
                     var obj_array = fieldnames.top_level.obj_array
                     var obj: T = createNewObject()
                     const original_first_element = obj[obj_array.name][0]
@@ -417,7 +480,9 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
 
             describe('cmd=remove', function() {
 
-                it('+ should remove an existing element from an array of simple types', function(done) {
+                let _it = skipIfAny([supported.basic_set_only])
+
+                _it('+ should remove an existing element from an array of simple types', function(done) {
                     var string_array = fieldnames.top_level.string_array
                     var obj: T = createNewObject()
                     expect(obj[string_array.name]).to.have.lengthOf(1)
@@ -429,7 +494,7 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
                 })
 
 
-                it('+ should remove an existing element from an array of objects', function(done) {
+                _it('+ should remove an existing element from an array of objects', function(done) {
                     var obj_array = fieldnames.top_level.obj_array
                     var obj: T = createNewObject()
                     expect(obj[obj_array.name]).to.have.lengthOf(1)
@@ -454,39 +519,62 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
 // seem to need getDB to be dynamic, otherwise DocumentDatabase is undefined!
 export function test_del<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void {
 
-    it('+ should delete a previously created object', function(done) {
+    it('+ should not be able to read after delete', function(done) {
         var db = getDB()
         var obj: T = createNewObject()
         var create_promise = db.create(obj)
         create_promise.then(
             (created_obj) => {
-                var del_promise = db.del(created_obj._id)
-                del_promise.then(
+                return db.del(created_obj._id).then(
                     (result) => {
-                        expect(created_obj).to.not.be.eql(obj)
-                        fieldnames.forEach((fieldname) => {
-                            expect(created_obj[fieldname]).to.equal(obj[fieldname])
-                        })
-                    }
-                ).then(
-                    (result) => {
-                        var read_promise = db.read(created_obj._id)
-                        read_promise.then(
+                        return db.read(created_obj._id).then(
                             (read_obj) => {
                                 expect(read_obj).to.not.exist
                                 done()
-                            },
-                            (error) => {
-                                done(error)
                             }
                         )
                     }
                 )
-            },
-            (error) => {
-                done(error)
             }
-        )
+        ).catch((error) => {done(error)})
+    })
+
+
+    it('- should return an error when the request is missing the _id', function(done) {
+        var db = getDB()
+        var obj: T = createNewObject()
+        var create_promise = db.create(obj)
+        create_promise.then(
+            (created_obj) => {
+                return db.del(undefined).then(
+                    (result) => {
+                        done(new Error('expected del to return error'))
+                    },
+                    (error) => {
+                        expect(error.message).to.equal('_id is invalid')
+                        done()
+                    }
+                )
+            }
+        ).catch((error) => {done(error)})
+    })
+
+
+    it('- should not return an error when the _id doesnt reference an object', function(done) {
+        const query_id = '123456789012345678901234'
+        var db = getDB()
+        var obj: T = createNewObject()
+        var create_promise = db.create(obj)
+        create_promise.then(
+            (created_obj) => {
+                return db.del(query_id).then(
+                    (result) => {
+                        expect(result).to.not.exist
+                        done()
+                    }
+                )
+            }
+        ).catch((error) => {done(error)})
     })
 
 }
