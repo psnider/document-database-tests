@@ -236,7 +236,7 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
 
             let cmd = 'set'
 
-            let _it = testOrSkip({requires: [!!config.test.populated_string], skip_if: [unsupported_array[cmd]]})
+            let _it = testOrSkip({requires: [!!config.test.populated_string], skip_if: [unsupported_object[cmd]]})
             _it('+ should replace an existing field in an object', function(done) {
                 var obj: T = createNewObject()
                 var populated_string = config.test.populated_string 
@@ -249,7 +249,7 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
             })
 
 
-            _it = testOrSkip({requires: [!!config.test.unpopulated_string], skip_if: [unsupported_array[cmd]]})
+            _it = testOrSkip({requires: [!!config.test.unpopulated_string], skip_if: [unsupported_object[cmd]]})
             _it('+ should create a non-existant field in an object', function(done) {
                 var obj: T = createNewObject()
                 var unpopulated_string = config.test.unpopulated_string 
@@ -270,7 +270,7 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
             let cmd = 'unset'
 
 
-            let _it = testOrSkip({requires: [!!config.test.populated_string], skip_if: [unsupported_array[cmd]]})
+            let _it = testOrSkip({requires: [!!config.test.populated_string], skip_if: [unsupported_object[cmd]]})
             _it('+ should remove an existing field in an object', function(done) {
                 var obj: T = createNewObject()
                 var populated_string = config.test.populated_string 

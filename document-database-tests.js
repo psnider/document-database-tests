@@ -170,7 +170,7 @@ function test_update(getDB, createNewObject, config) {
     describe('if selected item has a path without an array:', function () {
         describe('cmd=set:', function () {
             var cmd = 'set';
-            var _it = testOrSkip({ requires: [!!config.test.populated_string], skip_if: [unsupported_array[cmd]] });
+            var _it = testOrSkip({ requires: [!!config.test.populated_string], skip_if: [unsupported_object[cmd]] });
             _it('+ should replace an existing field in an object', function (done) {
                 var obj = createNewObject();
                 var populated_string = config.test.populated_string;
@@ -181,7 +181,7 @@ function test_update(getDB, createNewObject, config) {
                     expect(updated_obj[populated_string]).to.equal(replacement_value);
                 });
             });
-            _it = testOrSkip({ requires: [!!config.test.unpopulated_string], skip_if: [unsupported_array[cmd]] });
+            _it = testOrSkip({ requires: [!!config.test.unpopulated_string], skip_if: [unsupported_object[cmd]] });
             _it('+ should create a non-existant field in an object', function (done) {
                 var obj = createNewObject();
                 var unpopulated_string = config.test.unpopulated_string;
@@ -195,7 +195,7 @@ function test_update(getDB, createNewObject, config) {
         });
         describe('cmd=unset', function () {
             var cmd = 'unset';
-            var _it = testOrSkip({ requires: [!!config.test.populated_string], skip_if: [unsupported_array[cmd]] });
+            var _it = testOrSkip({ requires: [!!config.test.populated_string], skip_if: [unsupported_object[cmd]] });
             _it('+ should remove an existing field in an object', function (done) {
                 var obj = createNewObject();
                 var populated_string = config.test.populated_string;
