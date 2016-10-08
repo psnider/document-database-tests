@@ -174,8 +174,9 @@ export function test_replace<T>(getDB: () => DocumentDatabase<T>, createNewObjec
         var create_promise = db.create(obj)
         create_promise.then(
             (created_obj) => {
-                created_obj.name = 'widget-replaced'
-                created_obj.catalog_number = 'W-123-replaced'
+                config.forEach((fieldname) => {
+                    created_obj[fieldname] = created_obj[fieldname] + 1
+                })
                 var replace_promise = db.replace(created_obj)
                 replace_promise.then(
                     (replaced_obj) => {
@@ -297,10 +298,9 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
             _it('+ should replace an existing element in an array of simple types', function(done) {
                 var string_array = config.test.string_array
                 var obj: T = createNewObject()
-                const original_value = 'for all uses'
-                const updated_value = 'dont use with anti-widgets!'
-                obj[string_array.name] = [original_value]
-                var conditions = {}
+                const original_value = obj[string_array.name][0]
+                const updated_value = original_value + 1
+                var conditions = {_id: obj._id}
                 conditions[string_array.name] = original_value
                 var UPDATE_CMD : UpdateFieldCommand = {cmd, field: string_array.name, element_id: original_value, value: updated_value}
                 test_update(obj, conditions, UPDATE_CMD, done, (updated_obj) => {
@@ -319,12 +319,12 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
                 var path = `${obj_array.name}.${obj_array.key_field}`
                 var conditions = {}
                 conditions[path] = original_element_id
-                var REPLACED_COMPONENT = obj_array.createElement()
-                var UPDATE_CMD : UpdateFieldCommand = {cmd, field: obj_array.name, key_field: obj_array.key_field, element_id: original_element_id, value: REPLACED_COMPONENT}
+                var REPLACED_ELEMENT = obj_array.createElement()
+                var UPDATE_CMD : UpdateFieldCommand = {cmd, field: obj_array.name, key_field: obj_array.key_field, element_id: original_element_id, value: REPLACED_ELEMENT}
                 test_update(obj, conditions, UPDATE_CMD, done, (updated_obj) => {
-                    expect(updated_obj.components.length).to.equal(1)
-                    var component = updated_obj.components[0]
-                    expect(component).to.deep.equal(REPLACED_COMPONENT)
+                    expect(updated_obj[obj_array.name].length).to.equal(1)
+                    var updated_first_element = updated_obj[obj_array.name][0]
+                    expect(updated_first_element).to.deep.equal(REPLACED_ELEMENT)
                 })
             })
 
@@ -332,7 +332,7 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
             _it = testOrSkip({requires: [!!config.test.obj_array && !!config.test.obj_array.unpopulated_field], skip_if: [unsupported_array.set]})
             _it('+ should create a new field in an existing element in an array of objects', function(done) {
                 var obj_array = config.test.obj_array
-                var unpopulated_field = config.test.obj_array.unpopulated_field
+                var unpopulated_field = obj_array.unpopulated_field
                 var obj: T = createNewObject()
                 var original_first_element = obj[obj_array.name][0]
                 var original_element_id = original_first_element[obj_array.key_field]
@@ -342,8 +342,8 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
                 var value = getRandomValue(unpopulated_field.type)
                 var UPDATE_CMD : UpdateFieldCommand = {cmd, field: obj_array.name, key_field: obj_array.key_field, element_id: original_element_id, subfield: unpopulated_field.name, value}
                 test_update(obj, conditions, UPDATE_CMD, done, (updated_obj) => {
-                    var component = updated_obj.components[0]
-                    var updated_value = getValue(component, unpopulated_field.name)
+                    var updated_first_element = updated_obj[obj_array.name][0]
+                    var updated_value = getValue(updated_first_element, unpopulated_field.name)
                     expect(updated_value).to.equal(value)
                 })
             })
@@ -363,8 +363,8 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
                 var value = getValue(replacement_obj[obj_array.name][0], populated_field.name)
                 var UPDATE_CMD : UpdateFieldCommand = {cmd, field: obj_array.name, key_field: obj_array.key_field, element_id: original_element_id, subfield: populated_field.name, value}
                 test_update(obj, conditions, UPDATE_CMD, done, (updated_obj) => {
-                    var component = updated_obj.components[0]
-                    var updated_value = getValue(component, populated_field.name)
+                    var updated_first_element = updated_obj[obj_array.name][0]
+                    var updated_value = getValue(updated_first_element, populated_field.name)
                     expect(updated_value).to.equal(value)
                 })
             })
@@ -391,9 +391,10 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
                 var value = getValue(replacement_obj[obj_array.name][0], populated_field.name)
                 var UPDATE_CMD : UpdateFieldCommand = {cmd, field: obj_array.name, key_field: obj_array.key_field, element_id: original_element_id, subfield: populated_field.name}
                 test_update(obj, conditions, UPDATE_CMD, done, (updated_obj) => {
-                    var component = updated_obj.components[0]
-                    expect(component.info).to.exist
-                    expect(component.info.quantity).to.be.undefined
+                    var updated_first_element = updated_obj[obj_array.name][0]
+                    expect(updated_first_element).to.exist
+                    var updated_value = getValue(updated_first_element, populated_field.name)
+                    expect(updated_value).to.not.exist
                 })
             })
 
@@ -402,8 +403,7 @@ export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatab
             _it('- should not remove or delete an existing element of an array of simple types', function(done) {
                 var string_array = config.test.string_array
                 var obj: T = createNewObject()
-                const original_value = 'for all uses'
-                obj[string_array.name] = [original_value]
+                const original_value = obj[string_array.name][0]
                 var conditions = {}
                 conditions[string_array.name] = original_value
                 var UPDATE_CMD : UpdateFieldCommand = {cmd, field: string_array.name, element_id: original_value}
