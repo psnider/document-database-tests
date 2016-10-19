@@ -1,6 +1,6 @@
 {
   "name": "document-database-tests",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Tests for to a generic document (no-SQL) database, document-database-if.",
   "keywords": [],
   "main": "document-database-tests.js",

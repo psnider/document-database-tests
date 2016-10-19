@@ -1,4 +1,4 @@
-import {DocumentDatabase, UpdateFieldCommand} from 'document-database-if'
+import {DocumentDatabase, DocumentID, UpdateFieldCommand} from 'document-database-if'
 
 
 
@@ -45,9 +45,9 @@ export interface UpdateConfiguration {
     }
 }
 
-export function test_create<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void
-export function test_read<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void
-export function test_replace<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void
-export function test_update<T extends {_id?: string}>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, config: UpdateConfiguration): void
-export function test_del<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, fieldnames: string[]): void
-export function test_find<T>(getDB: () => DocumentDatabase<T>, createNewObject: () => T, unique_key_fieldname: string): void
+export function test_create<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, fieldnames: string[]): void
+export function test_read<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, fieldnames: string[]): void
+export function test_replace<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, fieldnames: string[]): void
+export function test_update<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, config: UpdateConfiguration): void
+export function test_del<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, fieldnames: string[]): void
+export function test_find<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, unique_key_fieldname: string): void
