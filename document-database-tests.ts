@@ -156,7 +156,7 @@ export function test_replace<DocumentType extends {_id?: DocumentID}>(getDB: () 
 
 //      AssertionError: expected { Object (_id, account_email, ...) } to not deeply equal { Object (__v, account_email, ...) }
 
-    it.only('+ should replace an existing object', function() {
+    it('+ should replace an existing object', function() {
         var db = getDB()
         var obj: DocumentType = createNewObject()
         return db.create(obj).then(
