@@ -107,7 +107,7 @@ exports.test_read = test_read;
 // seem to need getDB to be dynamic, otherwise DocumentDatabase is undefined!
 function test_replace(getDB, createNewObject, config) {
     //      AssertionError: expected { Object (_id, account_email, ...) } to not deeply equal { Object (__v, account_email, ...) }
-    it.only('+ should replace an existing object', function () {
+    it('+ should replace an existing object', function () {
         var db = getDB();
         var obj = createNewObject();
         return db.create(obj).then(function (created_obj) {
