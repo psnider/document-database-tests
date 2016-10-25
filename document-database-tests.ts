@@ -165,10 +165,8 @@ export function test_replace<DocumentType extends {_id?: DocumentID}>(getDB: () 
                 config.forEach((fieldname) => {
                     created_obj[fieldname] = created_obj[fieldname] + 1
                 })
-                console.log(`created_obj=${JSON.stringify(created_obj)}`)
                 return db.replace(created_obj).then(
                     (replaced_obj) => {
-                console.log(`replaced_obj=${JSON.stringify(replaced_obj)}`)
                         expect(replaced_obj).to.not.equal(created_obj)
                         config.forEach((fieldname) => {
                             expect(replaced_obj[fieldname]).to.equal(created_obj[fieldname])

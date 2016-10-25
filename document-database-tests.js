@@ -115,9 +115,7 @@ function test_replace(getDB, createNewObject, config) {
             config.forEach(function (fieldname) {
                 created_obj[fieldname] = created_obj[fieldname] + 1;
             });
-            console.log("created_obj=" + JSON.stringify(created_obj));
             return db.replace(created_obj).then(function (replaced_obj) {
-                console.log("replaced_obj=" + JSON.stringify(replaced_obj));
                 expect(replaced_obj).to.not.equal(created_obj);
                 config.forEach(function (fieldname) {
                     expect(replaced_obj[fieldname]).to.equal(created_obj[fieldname]);
