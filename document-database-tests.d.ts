@@ -49,9 +49,9 @@ export interface UpdateConfiguration {
     unsupported?: UnsupportedUpdateCmds
 }
 
-export function test_create<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, fieldnames: string[]): void
-export function test_read<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, fieldnames: string[]): void
-export function test_replace<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, fieldnames: string[]): void
-export function test_update<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, config: UpdateConfiguration): void
-export function test_del<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, fieldnames: string[]): void
-export function test_find<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, unique_key_fieldname: string): void
+export function test_create<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, fieldnames: string[]): void
+export function test_read<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, fieldnames: string[]): void
+export function test_replace<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, fieldnames: string[]): void
+export function test_update<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, config: UpdateConfiguration): void
+export function test_del<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, fieldnames: string[]): void
+export function test_find<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, unique_key_fieldname: string): void

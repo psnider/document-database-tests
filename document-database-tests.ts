@@ -1,7 +1,7 @@
 import chai                             = require('chai')
 var expect                              = chai.expect
 
-import {DocumentDatabase, DocumentID, UpdateFieldCommand, Cursor} from 'document-database-if'
+import {DocumentDatabase, DocumentBase, DocumentID, UpdateFieldCommand, Cursor} from 'document-database-if'
 import {UnsupportedUpdateArrayCmds, UnsupportedUpdateObjectCmds, UpdateConfiguration} from './document-database-tests.d'
 
 
@@ -53,7 +53,7 @@ function expectDBOjectToContainAllObjectFields(db_obj, obj) {
 
 
 // seem to need getDB to be dynamic, otherwise DocumentDatabase is undefined!
-export function test_create<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, config: string[]): void {
+export function test_create<DocumentType extends DocumentBase>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, config: string[]): void {
 
     it('+ should create a new object', function() {
         var db = getDB()
@@ -100,7 +100,7 @@ export function test_create<DocumentType extends {_id?: DocumentID}>(getDB: () =
 
 
 // seem to need getDB to be dynamic, otherwise DocumentDatabase is undefined!
-export function test_read<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, config: string[]): void {
+export function test_read<DocumentType extends DocumentBase>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, config: string[]): void {
 
     it('+ should read a previously created object', function() {
         var db = getDB()
@@ -152,7 +152,7 @@ export function test_read<DocumentType extends {_id?: DocumentID}>(getDB: () => 
 
 
 // seem to need getDB to be dynamic, otherwise DocumentDatabase is undefined!
-export function test_replace<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, config: string[]): void {
+export function test_replace<DocumentType extends DocumentBase>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, config: string[]): void {
 
 //      AssertionError: expected { Object (_id, account_email, ...) } to not deeply equal { Object (__v, account_email, ...) }
 
@@ -181,7 +181,7 @@ export function test_replace<DocumentType extends {_id?: DocumentID}>(getDB: () 
 }
 
 // seem to need getDB to be dynamic, otherwise DocumentDatabase is undefined!
-export function test_update<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, config: UpdateConfiguration): void {
+export function test_update<DocumentType extends DocumentBase>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, config: UpdateConfiguration): void {
 
     let unsupported_array:  UnsupportedUpdateArrayCmds  = (config.unsupported && config.unsupported.array) || {set: false, unset: false, insert: false, remove: false}
     let unsupported_object: UnsupportedUpdateObjectCmds = (config.unsupported && config.unsupported.object) || {set: false, unset: false}
@@ -509,7 +509,7 @@ export function test_update<DocumentType extends {_id?: DocumentID}>(getDB: () =
 
 
 // seem to need getDB to be dynamic, otherwise DocumentDatabase is undefined!
-export function test_del<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, config: string[]): void {
+export function test_del<DocumentType extends DocumentBase>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, config: string[]): void {
 
     it('+ should not be able to read after delete', function() {
         var db = getDB()
@@ -564,7 +564,7 @@ export function test_del<DocumentType extends {_id?: DocumentID}>(getDB: () => D
 
 
 // seem to need getDB to be dynamic, otherwise DocumentDatabase is undefined!
-export function test_find<DocumentType extends {_id?: DocumentID}>(getDB: () => DocumentDatabase<DocumentType>, createNewObject: () => DocumentType, unique_key_fieldname: string): void {
+export function test_find<DocumentType extends DocumentBase>(getDB: () => DocumentDatabase, createNewObject: () => DocumentType, unique_key_fieldname: string): void {
 
     it('+ should find an object with a matching name', function () {
         var db = getDB()

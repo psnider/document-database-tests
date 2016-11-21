@@ -5,7 +5,9 @@
   "keywords": [],
   "main": "document-database-tests.js",
   "private": false,
-  "scripts": {},
+  "scripts": {
+    "build": "tsc -p ."
+  },
   "author": {
     "name": "Peter Snider",
     "email": "snider.peter@gmail.com"
